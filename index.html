@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Daily/Weekly Team Activities</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    font-size: 13px;
+    color: #1a1a2e;
+    background: #f7f8fc;
+    padding: 16px;
+  }
+
+  .toolbar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+  }
+
+  .toolbar h2 {
+    font-size: 15px;
+    font-weight: 600;
+    color: #1a1a2e;
+    flex: 1;
+    min-width: 200px;
+  }
+
+  button {
+    font-family: inherit;
+    font-size: 12px;
+    padding: 5px 12px;
+    border-radius: 5px;
+    cursor: pointer;
+    border: 1px solid #d0d5e8;
+    background: #fff;
+    color: #333;
+    transition: background .15s, border-color .15s;
+  }
+  button:hover { background: #eef0fa; border-color: #a0a8d0; }
+
+  button.primary {
+    background: #3b5bdb;
+    color: #fff;
+    border-color: #3b5bdb;
+  }
+  button.primary:hover { background: #2f4ac4; }
+
+  .filter-bar {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .filter-bar label { font-size: 12px; color: #666; }
+
+  .filter-bar select, .filter-bar input {
+    font-family: inherit;
+    font-size: 12px;
+    padding: 4px 8px;
+    border: 1px solid #d0d5e8;
+    border-radius: 5px;
+    background: #fff;
+    color: #333;
+  }
+
+  .table-wrap {
+    overflow-x: auto;
+    border-radius: 8px;
+    border: 1px solid #dde1f0;
+    background: #fff;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 600px;
+  }
+
+  thead tr {
+    background: #1a1a2e;
+    color: #fff;
+  }
+
+  thead th {
+    padding: 9px 12px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 12px;
+    letter-spacing: .03em;
+    white-space: nowrap;
+    user-select: none;
+  }
+
+  thead th:first-child { border-radius: 7px 0 0 0; }
+  thead th:last-child  { border-radius: 0 7px 0 0; }
+
+  tbody tr {
+    border-bottom: 1px solid #eef0f8;
+    transition: background .1s;
+    cursor: grab;
+  }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: #f4f5fd; }
+  tbody tr.dragging {
+    opacity: .4;
+    cursor: grabbing;
+  }
+  tbody tr.drag-over {
+    border-top: 2px solid #3b5bdb;
+    background: #eef1ff;
+  }
+  tbody tr.drag-over td:first-child::before {
+    content: '↕';
+    position: absolute;
+    left: -2px;
+    color: #3b5bdb;
+    font-size: 14px;
+  }
+
+  /* drag handle column */
+  .drag-handle {
+    color: #bbb;
+    font-size: 14px;
+    cursor: grab;
+    padding: 0 4px;
+    user-select: none;
+    line-height: 1;
+  }
+  .drag-handle:hover { color: #3b5bdb; }
+
+  tbody td {
+    padding: 7px 10px;
+    vertical-align: middle;
+    position: relative;
+  }
+
+  .freq-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .02em;
+    white-space: nowrap;
+    cursor: pointer;
+  }
+  .freq-Daily    { background: #e8f5e9; color: #2e7d32; }
+  .freq-Weekly   { background: #e3f2fd; color: #1565c0; }
+  .freq-Monthly  { background: #fff3e0; color: #e65100; }
+
+  .owner-chip {
+    display: inline-block;
+    padding: 2px 9px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 500;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: filter .15s;
+  }
+  .owner-chip:hover { filter: brightness(.92); }
+
+  .owner-empty {
+    display: inline-block;
+    width: 28px;
+    height: 20px;
+    border-radius: 4px;
+    background: #f0f0f0;
+    cursor: pointer;
+    vertical-align: middle;
+    border: 1px dashed #ccc;
+  }
+  .owner-empty:hover { background: #e0e4ff; border-color: #3b5bdb; }
+
+  /* inline edit inputs */
+  td input[type="text"], td select {
+    font-family: inherit;
+    font-size: 12px;
+    padding: 3px 6px;
+    border: 1px solid #3b5bdb;
+    border-radius: 4px;
+    outline: none;
+    width: 100%;
+    min-width: 60px;
+  }
+
+  /* owner dropdown wrapper */
+  .owner-dropdown-wrap {
+    position: relative;
+    display: inline-block;
+    min-width: 110px;
+  }
+  .owner-dropdown-wrap select {
+    width: 100%;
+    padding: 3px 22px 3px 6px;
+    font-size: 12px;
+    border: 1px solid #3b5bdb;
+    border-radius: 4px;
+    background: #fff;
+    cursor: pointer;
+    appearance: auto;
+  }
+
+  .actions-col { width: 36px; text-align: center; }
+  .drag-col    { width: 28px; text-align: center; }
+  .del-btn {
+    background: none;
+    border: none;
+    color: #ccc;
+    font-size: 16px;
+    cursor: pointer;
+    padding: 2px 6px;
+    border-radius: 4px;
+    line-height: 1;
+  }
+  .del-btn:hover { color: #c92a2a; background: #fff0f0; }
+
+  /* modal */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.35);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: #fff;
+    border-radius: 10px;
+    padding: 20px 24px;
+    width: 360px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 8px 32px rgba(0,0,0,.18);
+  }
+  .modal h3 { font-size: 14px; margin-bottom: 14px; color: #1a1a2e; }
+  .modal label { font-size: 12px; color: #555; display: block; margin-bottom: 3px; margin-top: 10px; }
+  .modal input, .modal select {
+    font-family: inherit;
+    font-size: 13px;
+    padding: 6px 9px;
+    border: 1px solid #d0d5e8;
+    border-radius: 6px;
+    width: 100%;
+  }
+  .modal-actions { display: flex; gap: 8px; margin-top: 16px; justify-content: flex-end; }
+  .modal-divider { border: none; border-top: 1px solid #eef0f8; margin: 14px 0 4px; }
+
+  .export-note {
+    margin-top: 10px;
+    font-size: 11px;
+    color: #888;
+  }
+
+  .new-user-row {
+    display: flex;
+    gap: 6px;
+    margin-top: 6px;
+  }
+  .new-user-row input {
+    flex: 1;
+    font-size: 12px;
+    padding: 4px 8px;
+    border: 1px solid #d0d5e8;
+    border-radius: 5px;
+  }
+  .new-user-row button {
+    font-size: 12px;
+    padding: 4px 10px;
+    white-space: nowrap;
+  }
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <h2>Daily / Weekly Team Activities</h2>
+  <button onclick="openAddModal()">+ Add row</button>
+  <button onclick="exportCSV()">Export CSV</button>
+  <button onclick="copyHTML()" id="copy-btn">Copy HTML</button>
+</div>
+
+<div class="filter-bar">
+  <label>Frequency:</label>
+  <select id="filter-freq" onchange="renderTable()">
+    <option value="">All</option>
+    <option>Daily</option>
+    <option>Weekly</option>
+    <option>Monthly</option>
+  </select>
+  <label style="margin-left:8px">Search:</label>
+  <input type="text" id="filter-search" placeholder="Task or owner…" oninput="renderTable()" style="width:160px">
+</div>
+
+<div class="table-wrap">
+  <table id="main-table">
+    <thead>
+      <tr>
+        <th class="drag-col"></th>
+        <th>Frequency</th>
+        <th>Task</th>
+        <th>PRC</th>
+        <th>NAR</th>
+        <th>HRC</th>
+        <th>PCI</th>
+        <th>CIP</th>
+        <th class="actions-col"></th>
+      </tr>
+    </thead>
+    <tbody id="table-body"></tbody>
+  </table>
+</div>
+
+<div class="export-note">
+  ⠿ Drag rows to reorder &nbsp;·&nbsp; Click any cell to edit &nbsp;·&nbsp; Use <strong>Export CSV</strong> to save permanently
+</div>
+
+<!-- Add row modal -->
+<div class="modal-overlay" id="add-modal">
+  <div class="modal">
+    <h3>Add new row</h3>
+    <label>Frequency</label>
+    <select id="new-freq">
+      <option>Daily</option>
+      <option>Weekly</option>
+      <option>Monthly</option>
+    </select>
+    <label>Task name</label>
+    <input type="text" id="new-task" placeholder="e.g. Bank Reconciliation">
+
+    <hr class="modal-divider">
+    <div style="font-size:11px;color:#888;margin-bottom:4px">Assign owners per entity</div>
+
+    <label>PRC</label><select id="new-PRC"></select>
+    <label>NAR</label><select id="new-NAR"></select>
+    <label>HRC</label><select id="new-HRC"></select>
+    <label>PCI</label><select id="new-PCI"></select>
+    <label>CIP</label><select id="new-CIP"></select>
+
+    <hr class="modal-divider">
+    <div style="font-size:11px;color:#888;margin-bottom:2px">Add a new team member</div>
+    <div class="new-user-row">
+      <input type="text" id="new-user-input" placeholder="First name (e.g. Alex)">
+      <button onclick="addNewUser()">+ Add</button>
+    </div>
+
+    <div class="modal-actions">
+      <button onclick="closeAddModal()">Cancel</button>
+      <button class="primary" onclick="addRow()">Add row</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const ENTITIES = ['PRC','NAR','HRC','PCI','CIP'];
+
+let USERS = ['Jordan','Rosa','Grace','Eddie','Conor','Britney','Kryssa','Emily','Sophya','Glenn'];
+
+const OWNER_COLORS = {
+  'Jordan':  { bg:'#e3f2fd', color:'#0d47a1' },
+  'Rosa':    { bg:'#fce4ec', color:'#880e4f' },
+  'Grace':   { bg:'#e8f5e9', color:'#1b5e20' },
+  'Eddie':   { bg:'#e8eaf6', color:'#1a237e' },
+  'Conor':   { bg:'#e0f2f1', color:'#004d40' },
+  'Britney': { bg:'#fff8e1', color:'#e65100' },
+  'Kryssa':  { bg:'#f3e5f5', color:'#4a148c' },
+  'Emily':   { bg:'#ede7f6', color:'#4527a0' },
+  'Sophya':  { bg:'#fff3e0', color:'#bf360c' },
+  'Glenn':   { bg:'#e0f7fa', color:'#006064' },
+  'Doreen':  { bg:'#e0f7fa', color:'#006064' },
+  'Rachel':  { bg:'#fff9c4', color:'#f57f17' },
+  'Brent':   { bg:'#efebe9', color:'#3e2723' },
+};
+
+// Generate colors for custom users
+const AUTO_COLORS = [
+  { bg:'#f1f8e9', color:'#33691e' },
+  { bg:'#fbe9e7', color:'#bf360c' },
+  { bg:'#e8eaf6', color:'#283593' },
+  { bg:'#fce4ec', color:'#880e4f' },
+  { bg:'#e0f2f1', color:'#00695c' },
+];
+
+function ownerStyle(name) {
+  if (!name || name === 'N/A') return { bg:'#f0f0f0', color:'#777' };
+  const first = name.trim().split(' ')[0];
+  if (OWNER_COLORS[first]) return OWNER_COLORS[first];
+  // deterministic color for unknown users
+  let hash = 0;
+  for (let c of first) hash = (hash * 31 + c.charCodeAt(0)) & 0xffff;
+  return AUTO_COLORS[hash % AUTO_COLORS.length];
+}
+
+let data = [
+  {Frequency:"Daily",Task:"Bank Transactions",PRC:"Rosa",NAR:"Grace",HRC:"Rosa",PCI:"Grace",CIP:"Rosa"},
+  {Frequency:"Daily",Task:"Coding in DIVVY",PRC:"",NAR:"Grace",HRC:"Grace",PCI:"Doreen",CIP:"Rosa"},
+  {Frequency:"Daily",Task:"Coding in DIVVY - PRC Service",PRC:"Jordan",NAR:"",HRC:"",PCI:"",CIP:""},
+  {Frequency:"Daily",Task:"Coding in DIVVY - PRC Field",PRC:"Grace",NAR:"",HRC:"",PCI:"",CIP:""},
+  {Frequency:"Daily",Task:"Coding in DIVVY - PRC All Other Budgets",PRC:"Rosa",NAR:"",HRC:"",PCI:"",CIP:""},
+  {Frequency:"Daily",Task:"DIVVY Mapping",PRC:"Grace",NAR:"Grace",HRC:"Grace",PCI:"Grace",CIP:"Grace"},
+  {Frequency:"Weekly",Task:"Divvy Approval Email Reminders",PRC:"Jordan",NAR:"Jordan",HRC:"",PCI:"",CIP:""},
+  {Frequency:"Daily",Task:"Bill Entry - Owner",PRC:"Jordan",NAR:"Jordan",HRC:"Jordan",PCI:"Jordan",CIP:"Jordan"},
+  {Frequency:"Daily",Task:"Bill.com Batching",PRC:"Jordan",NAR:"Jordan",HRC:"Jordan",PCI:"Jordan",CIP:"Jordan"},
+  {Frequency:"Daily",Task:"Bill.com Batch Approvals",PRC:"Kryssa",NAR:"Kryssa",HRC:"Kryssa",PCI:"Kryssa",CIP:"Kryssa"},
+  {Frequency:"Daily",Task:"Desk AR Assignment",PRC:"Rosa",NAR:"Rosa",HRC:"Rachel",PCI:"Doreen",CIP:"Sophya"},
+  {Frequency:"Daily",Task:"Desk AR Management",PRC:"Sophya",NAR:"Sophya",HRC:"Rachel",PCI:"Doreen",CIP:"Sophya"},
+  {Frequency:"Daily",Task:"Desk AP Assignment",PRC:"Grace",NAR:"Jordan",HRC:"",PCI:"",CIP:""},
+  {Frequency:"Daily",Task:"Desk AP Management",PRC:"Jordan",NAR:"Jordan",HRC:"Jordan",PCI:"Jordan",CIP:"Jordan"},
+  {Frequency:"Weekly",Task:"WIP Prep Report Review",PRC:"Grace",NAR:"Grace",HRC:"Grace",PCI:"Grace",CIP:""},
+  {Frequency:"Daily",Task:"POSPAY - Enterprise Bank",PRC:"Kryssa",NAR:"Kryssa",HRC:"Kryssa",PCI:"Kryssa",CIP:"Kryssa"},
+  {Frequency:"Daily",Task:"Exceptions Dashboard",PRC:"",NAR:"",HRC:"",PCI:"",CIP:""},
+  {Frequency:"Weekly",Task:"AR Meeting Prep",PRC:"Sophya",NAR:"Sophya",HRC:"Sophya",PCI:"Sophya",CIP:"Sophya"},
+  {Frequency:"Weekly",Task:"AP Small Batch Run",PRC:"Jordan",NAR:"Jordan",HRC:"Jordan",PCI:"Jordan",CIP:"Jordan"},
+  {Frequency:"Weekly",Task:"1099 Contractor Payments",PRC:"Jordan",NAR:"Jordan",HRC:"Jordan",PCI:"Jordan",CIP:"Jordan"},
+  {Frequency:"Daily",Task:"Expense Approval Review",PRC:"Jordan",NAR:"Jordan",HRC:"Jordan",PCI:"Jordan",CIP:"Jordan"},
+  {Frequency:"Daily",Task:"Expense Approvals - Denied Bill Update",PRC:"Jordan",NAR:"Jordan",HRC:"Jordan",PCI:"Jordan",CIP:"Jordan"},
+  {Frequency:"Monthly",Task:"Statement Review",PRC:"",NAR:"",HRC:"",PCI:"",CIP:""},
+  {Frequency:"Monthly",Task:"Insurance Bill Review",PRC:"Jordan",NAR:"Jordan",HRC:"Jordan",PCI:"Jordan",CIP:"Jordan"},
+  {Frequency:"Monthly",Task:"Utility Bill Review",PRC:"Jordan",NAR:"Jordan",HRC:"Jordan",PCI:"Jordan",CIP:"Jordan"},
+  {Frequency:"Daily",Task:"AR Outreach",PRC:"Sophya",NAR:"Sophya",HRC:"Sophya",PCI:"Sophya",CIP:"Sophya"}
+];
+
+let editingCell = null;
+
+// ── drag-and-drop state ──────────────────────────────────────────
+let dragSrcIdx = null;
+let isFiltered = false;
+
+function buildOwnerSelect(currentVal, extraClass) {
+  const sel = document.createElement('select');
+  if (extraClass) sel.className = extraClass;
+
+  // ensure any existing value that isn't in USERS list is included
+  const allUsers = [...USERS];
+  if (currentVal && currentVal !== 'N/A' && !allUsers.includes(currentVal)) {
+    allUsers.push(currentVal);
+  }
+
+  // blank / unassigned option
+  const blank = document.createElement('option');
+  blank.value = ''; blank.textContent = '— unassigned —';
+  if (!currentVal) blank.selected = true;
+  sel.appendChild(blank);
+
+  // N/A option
+  const na = document.createElement('option');
+  na.value = 'N/A'; na.textContent = 'N/A';
+  if (currentVal === 'N/A') na.selected = true;
+  sel.appendChild(na);
+
+  allUsers.forEach(u => {
+    const opt = document.createElement('option');
+    opt.value = u; opt.textContent = u;
+    if (u === currentVal) opt.selected = true;
+    sel.appendChild(opt);
+  });
+
+  return sel;
+}
+
+function getFiltered() {
+  const freq = document.getElementById('filter-freq').value;
+  const search = document.getElementById('filter-search').value.toLowerCase();
+  isFiltered = !!(freq || search);
+  return data.map((row, i) => ({row, i})).filter(({row}) => {
+    if (freq && row.Frequency !== freq) return false;
+    if (search) {
+      const haystack = [row.Task, ...ENTITIES.map(e => row[e])].join(' ').toLowerCase();
+      if (!haystack.includes(search)) return false;
+    }
+    return true;
+  });
+}
+
+function renderTable() {
+  const tbody = document.getElementById('table-body');
+  const filtered = getFiltered();
+  tbody.innerHTML = '';
+
+  filtered.forEach(({row, i}) => {
+    const tr = document.createElement('tr');
+    tr.dataset.idx = i;
+
+    // ── drag handle cell ──
+    const tdHandle = document.createElement('td');
+    tdHandle.className = 'drag-col';
+    const handle = document.createElement('span');
+    handle.className = 'drag-handle';
+    handle.innerHTML = '⠿';
+    handle.title = 'Drag to reorder';
+    tdHandle.appendChild(handle);
+    tr.appendChild(tdHandle);
+
+    // ── drag events (only when not filtered) ──
+    if (!isFiltered) {
+      tr.draggable = true;
+      tr.addEventListener('dragstart', e => {
+        dragSrcIdx = i;
+        tr.classList.add('dragging');
+        e.dataTransfer.effectAllowed = 'move';
+      });
+      tr.addEventListener('dragend', () => {
+        tr.classList.remove('dragging');
+        document.querySelectorAll('#table-body tr').forEach(r => r.classList.remove('drag-over'));
+      });
+      tr.addEventListener('dragover', e => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        document.querySelectorAll('#table-body tr').forEach(r => r.classList.remove('drag-over'));
+        tr.classList.add('drag-over');
+      });
+      tr.addEventListener('dragleave', () => tr.classList.remove('drag-over'));
+      tr.addEventListener('drop', e => {
+        e.preventDefault();
+        if (dragSrcIdx === null || dragSrcIdx === i) return;
+        const moved = data.splice(dragSrcIdx, 1)[0];
+        const newTarget = dragSrcIdx < i ? i - 1 : i;
+        data.splice(newTarget, 0, moved);
+        dragSrcIdx = null;
+        renderTable();
+      });
+    } else {
+      handle.style.opacity = '.3';
+      handle.title = 'Clear filters to enable drag-and-drop';
+    }
+
+    // ── Frequency cell ──
+    const tdFreq = document.createElement('td');
+    if (editingCell && editingCell.rowIdx === i && editingCell.field === 'Frequency') {
+      const sel = document.createElement('select');
+      ['Daily','Weekly','Monthly'].forEach(f => {
+        const opt = document.createElement('option');
+        opt.value = f; opt.textContent = f;
+        if (f === row.Frequency) opt.selected = true;
+        sel.appendChild(opt);
+      });
+      sel.onchange = () => { data[i].Frequency = sel.value; editingCell = null; renderTable(); };
+      sel.onblur = () => { editingCell = null; renderTable(); };
+      tdFreq.appendChild(sel);
+      setTimeout(() => sel.focus(), 0);
+    } else {
+      const badge = document.createElement('span');
+      badge.className = `freq-badge freq-${row.Frequency}`;
+      badge.textContent = row.Frequency;
+      badge.onclick = () => { editingCell = {rowIdx: i, field: 'Frequency'}; renderTable(); };
+      tdFreq.appendChild(badge);
+    }
+    tr.appendChild(tdFreq);
+
+    // ── Task cell ──
+    const tdTask = document.createElement('td');
+    if (editingCell && editingCell.rowIdx === i && editingCell.field === 'Task') {
+      const inp = document.createElement('input');
+      inp.type = 'text'; inp.value = row.Task;
+      inp.onblur = () => { data[i].Task = inp.value; editingCell = null; renderTable(); };
+      inp.onkeydown = e => { if(e.key==='Enter'||e.key==='Escape') inp.blur(); };
+      tdTask.appendChild(inp);
+      setTimeout(() => inp.focus(), 0);
+    } else {
+      tdTask.textContent = row.Task;
+      tdTask.style.cursor = 'pointer';
+      tdTask.onclick = () => { editingCell = {rowIdx: i, field: 'Task'}; renderTable(); };
+    }
+    tr.appendChild(tdTask);
+
+    // ── Entity (owner) cells ──
+    ENTITIES.forEach(ent => {
+      const td = document.createElement('td');
+      if (editingCell && editingCell.rowIdx === i && editingCell.field === ent) {
+        const wrap = document.createElement('div');
+        wrap.className = 'owner-dropdown-wrap';
+        const sel = buildOwnerSelect(row[ent]);
+        sel.onchange = () => { data[i][ent] = sel.value; editingCell = null; renderTable(); };
+        sel.onblur = () => { editingCell = null; renderTable(); };
+        wrap.appendChild(sel);
+        td.appendChild(wrap);
+        setTimeout(() => sel.focus(), 0);
+      } else {
+        const val = row[ent];
+        if (val) {
+          const chip = document.createElement('span');
+          chip.className = 'owner-chip';
+          chip.textContent = val;
+          const style = ownerStyle(val);
+          chip.style.background = style.bg;
+          chip.style.color = style.color;
+          chip.onclick = () => { editingCell = {rowIdx: i, field: ent}; renderTable(); };
+          td.appendChild(chip);
+        } else {
+          const empty = document.createElement('span');
+          empty.className = 'owner-empty';
+          empty.title = 'Click to assign';
+          empty.onclick = () => { editingCell = {rowIdx: i, field: ent}; renderTable(); };
+          td.appendChild(empty);
+        }
+      }
+      tr.appendChild(td);
+    });
+
+    // ── Delete button ──
+    const tdDel = document.createElement('td');
+    tdDel.className = 'actions-col';
+    const delBtn = document.createElement('button');
+    delBtn.className = 'del-btn';
+    delBtn.innerHTML = '&times;';
+    delBtn.title = 'Delete row';
+    delBtn.onclick = () => {
+      if (confirm(`Delete "${row.Task}"?`)) { data.splice(i, 1); renderTable(); }
+    };
+    tdDel.appendChild(delBtn);
+    tr.appendChild(tdDel);
+
+    tbody.appendChild(tr);
+  });
+}
+
+// ── Modal helpers ────────────────────────────────────────────────
+function populateModalSelects() {
+  ENTITIES.forEach(ent => {
+    const el = document.getElementById('new-' + ent);
+    const cur = el ? el.value : '';
+    if (!el) return;
+    el.innerHTML = '';
+    const blank = document.createElement('option');
+    blank.value = ''; blank.textContent = '— unassigned —';
+    el.appendChild(blank);
+    const na = document.createElement('option');
+    na.value = 'N/A'; na.textContent = 'N/A';
+    el.appendChild(na);
+    USERS.forEach(u => {
+      const opt = document.createElement('option');
+      opt.value = u; opt.textContent = u;
+      if (u === cur) opt.selected = true;
+      el.appendChild(opt);
+    });
+  });
+}
+
+function openAddModal() {
+  populateModalSelects();
+  document.getElementById('add-modal').classList.add('open');
+  document.getElementById('new-task').focus();
+}
+
+function closeAddModal() {
+  document.getElementById('add-modal').classList.remove('open');
+  document.getElementById('new-task').value = '';
+  document.getElementById('new-user-input').value = '';
+  document.getElementById('new-freq').value = 'Daily';
+  ENTITIES.forEach(ent => {
+    const el = document.getElementById('new-' + ent);
+    if (el) el.value = '';
+  });
+}
+
+function addRow() {
+  const task = document.getElementById('new-task').value.trim();
+  if (!task) { alert('Please enter a task name.'); return; }
+  const row = { Frequency: document.getElementById('new-freq').value, Task: task };
+  ENTITIES.forEach(ent => { row[ent] = document.getElementById('new-' + ent).value; });
+  data.push(row);
+  closeAddModal();
+  renderTable();
+}
+
+function addNewUser() {
+  const inp = document.getElementById('new-user-input');
+  const name = inp.value.trim();
+  if (!name) return;
+  const capitalized = name.charAt(0).toUpperCase() + name.slice(1);
+  if (!USERS.includes(capitalized)) {
+    USERS.push(capitalized);
+    inp.value = '';
+    populateModalSelects();
+    // show confirmation
+    inp.placeholder = `✓ ${capitalized} added`;
+    setTimeout(() => { inp.placeholder = 'First name (e.g. Alex)'; }, 2000);
+  } else {
+    inp.placeholder = 'Already in list';
+    inp.value = '';
+    setTimeout(() => { inp.placeholder = 'First name (e.g. Alex)'; }, 2000);
+  }
+}
+
+// ── Export ───────────────────────────────────────────────────────
+function exportCSV() {
+  const header = ['Frequency','Task',...ENTITIES];
+  const rows = data.map(r => header.map(h => `"${(r[h]||'').replace(/"/g,'""')}"`).join(','));
+  const csv = [header.join(','), ...rows].join('\n');
+  const blob = new Blob([csv], {type:'text/csv'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'team_activities.csv';
+  a.click();
+}
+
+function copyHTML() {
+  const header = ['Frequency','Task',...ENTITIES];
+  let html = '<table border="1" cellpadding="6" cellspacing="0" style="border-collapse:collapse;font-family:sans-serif;font-size:13px">\n';
+  html += '<thead><tr style="background:#1a1a2e;color:#fff">' + header.map(h=>`<th>${h}</th>`).join('') + '</tr></thead>\n<tbody>\n';
+  data.forEach(r => { html += '<tr>' + header.map(h=>`<td>${r[h]||''}</td>`).join('') + '</tr>\n'; });
+  html += '</tbody></table>';
+  navigator.clipboard.writeText(html).then(() => {
+    const btn = document.getElementById('copy-btn');
+    btn.textContent = 'Copied!';
+    setTimeout(() => { btn.textContent = 'Copy HTML'; }, 2000);
+  });
+}
+
+// Close modal on overlay click
+document.getElementById('add-modal').addEventListener('click', function(e) {
+  if (e.target === this) closeAddModal();
+});
+
+// Enter key in new-user-input
+document.getElementById('new-user-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') addNewUser();
+});
+
+renderTable();
+</script>
+</body>
+</html>
