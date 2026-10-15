@@ -77,9 +77,13 @@ h1{font-size:15px;font-weight:600;margin:0;letter-spacing:.01em}
 .filters select,.filters input{background:var(--surface);border:1px solid var(--line);border-radius:5px;padding:5px 8px;color:var(--fg);min-width:0}
 .filters input{width:210px;max-width:100%}
 
-.wrap{background:var(--surface);border:1px solid var(--line);border-radius:8px;overflow-x:auto}
+.wrap{background:var(--surface);border:1px solid var(--line);border-radius:8px;overflow:auto;max-height:max(360px,calc(100vh - 190px));scrollbar-width:auto;scrollbar-color:var(--muted) var(--hover)}
+.wrap::-webkit-scrollbar{height:14px;width:14px}
+.wrap::-webkit-scrollbar-track{background:var(--hover)}
+.wrap::-webkit-scrollbar-thumb{background:var(--muted);border-radius:7px;border:3px solid var(--hover)}
+.wrap::-webkit-scrollbar-corner{background:var(--hover)}
 table{border-collapse:collapse;width:100%;min-width:1320px;table-layout:fixed}
-thead th{background:var(--head-bg);color:var(--head-fg);text-align:left;font-size:11px;font-weight:600;padding:11px 8px;letter-spacing:.04em}
+thead th{position:sticky;top:0;z-index:2;background:var(--head-bg);color:var(--head-fg);text-align:left;font-size:11px;font-weight:600;padding:11px 8px;letter-spacing:.04em}
 tbody td{padding:5px 8px;border-top:1px solid var(--line);vertical-align:middle;height:34px}
 tbody tr:hover{background:var(--hover)}
 col.c-grip{width:30px}col.c-freq{width:108px}col.c-task{width:230px}col.c-note{width:230px}col.c-del{width:44px}
@@ -159,7 +163,7 @@ body.ro .chip,body.ro select.freq{cursor:default}
   </table>
   <div class="state" id="state" hidden></div>
 </div>
-<p class="foot" id="foot">Click an owner to change it, drag the dots to reorder. Changes save for everyone automatically.</p>
+<p class="foot" id="foot">Click an owner to change it, drag the dots to reorder. Scroll right for FTS and Notes. Changes save for everyone automatically.</p>
 <datalist id="names"></datalist>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
