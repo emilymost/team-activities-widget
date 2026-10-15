@@ -1,6 +1,6 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Team Responsibilities</title>
-<meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap">
 <style>
 /* Layout: full-width editable matrix, one row per task, one column per entity, owners as colored chips. */
@@ -77,7 +77,7 @@ h1{font-size:15px;font-weight:600;margin:0;letter-spacing:.01em}
 .filters select,.filters input{background:var(--surface);border:1px solid var(--line);border-radius:5px;padding:5px 8px;color:var(--fg);min-width:0}
 .filters input{width:210px;max-width:100%}
 
-.wrap{background:var(--surface);border:1px solid var(--line);border-radius:8px;overflow:auto;height:440px;max-height:440px;overscroll-behavior:contain;scrollbar-width:auto;scrollbar-color:var(--muted) var(--hover)}
+.wrap{background:var(--surface);border:1px solid var(--line);border-radius:8px;overflow:auto;height:max(360px,min(680px,calc(100vh - 200px)));overscroll-behavior:contain;scrollbar-width:auto;scrollbar-color:var(--muted) var(--hover)}
 .wrap::-webkit-scrollbar{height:14px;width:14px}
 .wrap::-webkit-scrollbar-track{background:var(--hover)}
 .wrap::-webkit-scrollbar-thumb{background:var(--muted);border-radius:7px;border:3px solid var(--hover)}
@@ -133,6 +133,7 @@ body.ro .chip,body.ro select.freq{cursor:default}
 .sheet-box textarea{width:100%;height:220px;background:var(--bg);color:var(--fg);border:1px solid var(--line);border-radius:6px;padding:8px;font:12px ui-monospace,Menlo,monospace}
 @media (prefers-reduced-motion: reduce){.toast{transition:none}}
 </style>
+</head><body>
 
 <div class="top">
   <div>
@@ -201,9 +202,9 @@ function setStatus(kind,text){$('dot').className='dot '+kind;$('status').textCon
 function write(fn){
   if(!canWrite)return Promise.resolve();
   setStatus('busy','Saving…');
-  return fn().then(function(){setStatus('ok','Saved')},function(e){
+  return fn().then(function(){setStatus('ok','Saved in this browser')},function(e){
     if(e&&e.code==='invalid_argument'){setReadOnly('You can view this list but not edit it.')}
-    else{setStatus('bad','Not saved');toast('That change did not save. Try again in a moment.')}
+    else{setStatus('bad','Not saved');toast('This browser blocked saving. Use Export CSV to keep a copy.')}
   });
 }
 function setReadOnly(msg){
@@ -410,27 +411,53 @@ function unavailable(msg){
   stateEl.appendChild(h('strong',{text:'The task list is not available'}));
   stateEl.appendChild(document.createTextNode(msg));
 }
-async function boot(){
-  var cl=window.claude;
-  if(!cl||!cl.use){unavailable('Open this page from Claude to load the shared task list.');return}
-  var db=await cl.use('db');
-  if(!db){unavailable('Sign in to Claude to view and edit the shared task list.');return}
-  try{var user=await cl.use('user');if(user&&user.can&&user.can('data.write')===false)canWrite=false}catch(e){}
-  try{downloads=await cl.use('downloads')}catch(e){downloads=null}
-  col=db.collection('tasks');
-  if(!canWrite){document.body.classList.add('ro');$('foot').textContent='You can view this list but not edit it.'}
-  else $('add').disabled=false;
+var KEY='cip-team-activities-v2';
+var SEED=[{"id":"r01","order":1,"freq":"Daily","task":"Bank Transactions","note":"","owners":{"PRC":"Conor","NAR":"Conor","HRC":"Rosa","PCI":"Conor","CIP":"Rosa","FTS":"Rosa"}},{"id":"r02","order":2,"freq":"Daily","task":"Coding in DIVVY","note":"Circle back in 1-2 weeks - revisit how the split is going","owners":{"PRC":"","NAR":"Rosa","HRC":"Jordan","PCI":"Doreen","CIP":"Sophya","FTS":"Rosa"}},{"id":"r03","order":3,"freq":"Daily","task":"Coding in DIVVY - PRC Service","note":"","owners":{"PRC":"Samantha","NAR":"","HRC":"","PCI":"","CIP":"","FTS":""}},{"id":"r04","order":4,"freq":"Daily","task":"Coding in DIVVY - PRC Field","note":"","owners":{"PRC":"Conor","NAR":"","HRC":"","PCI":"","CIP":"","FTS":""}},{"id":"r05","order":5,"freq":"Daily","task":"Coding in DIVVY - PRC All Other Budgets","note":"","owners":{"PRC":"Conor","NAR":"","HRC":"","PCI":"","CIP":"","FTS":""}},{"id":"r06","order":6,"freq":"Daily","task":"DIVVY Mapping","note":"","owners":{"PRC":"Conor","NAR":"Conor","HRC":"Conor","PCI":"Conor","CIP":"Conor","FTS":""}},{"id":"r07","order":7,"freq":"Weekly","task":"Divvy Approval Email Reminders","note":"","owners":{"PRC":"Jordan","NAR":"Jordan","HRC":"","PCI":"","CIP":"","FTS":""}},{"id":"r08","order":8,"freq":"Weekly","task":"Divvy Incomplete Reminders","note":"","owners":{"PRC":"Samantha","NAR":"Samantha","HRC":"Samantha","PCI":"Samantha","CIP":"Samantha","FTS":"Samantha"}},{"id":"r09","order":9,"freq":"Daily","task":"Bill Entry - Owner","note":"","owners":{"PRC":"Samantha","NAR":"Jordan","HRC":"Samantha","PCI":"Jordan","CIP":"Jordan","FTS":"Jordan"}},{"id":"r10","order":10,"freq":"Daily","task":"Bill.com Batching","note":"","owners":{"PRC":"Jordan","NAR":"Jordan","HRC":"Jordan","PCI":"Jordan","CIP":"Jordan","FTS":""}},{"id":"r11","order":11,"freq":"Daily","task":"Bill.com Batch Approvals","note":"","owners":{"PRC":"Kryssa","NAR":"Kryssa","HRC":"Kryssa","PCI":"Kryssa","CIP":"Kryssa","FTS":""}},{"id":"r12","order":12,"freq":"Daily","task":"Desk AR Assignment","note":"","owners":{"PRC":"Samantha","NAR":"Samantha","HRC":"Rachel","PCI":"Doreen","CIP":"Samantha","FTS":""}},{"id":"r13","order":13,"freq":"Daily","task":"AP Desk Ticket Assignment","note":"","owners":{"PRC":"Samantha","NAR":"Samantha","HRC":"Rachel","PCI":"Doreen","CIP":"Samantha","FTS":""}},{"id":"r14","order":14,"freq":"Daily","task":"AP Desk Clean-up/Denied","note":"","owners":{"PRC":"Samantha","NAR":"Jordan","HRC":"Samantha","PCI":"Jordan","CIP":"Jordan","FTS":""}},{"id":"r15","order":15,"freq":"Weekly","task":"WIP Prep Report Review","note":"will transfer to sam once trained - once QBO gets the consolidated report finalized","owners":{"PRC":"Grace","NAR":"Grace","HRC":"Grace","PCI":"Grace","CIP":"","FTS":""}},{"id":"r16","order":16,"freq":"Daily","task":"POSPAY - Enterprise Bank","note":"","owners":{"PRC":"Kryssa","NAR":"Kryssa","HRC":"Kryssa","PCI":"Kryssa","CIP":"Kryssa","FTS":"Kryssa"}},{"id":"r17","order":17,"freq":"Daily","task":"Exceptions Dashboard","note":"Glen Conor Kyrssa meeting","owners":{"PRC":"Conor","NAR":"Conor","HRC":"Conor","PCI":"Conor","CIP":"Conor","FTS":""}},{"id":"r18","order":18,"freq":"Weekly","task":"AR Meeting Prep","note":"","owners":{"PRC":"Sophya","NAR":"Sophya","HRC":"Sophya","PCI":"Sophya","CIP":"Sophya","FTS":""}},{"id":"r19","order":19,"freq":"Weekly","task":"AP Small Batch Run","note":"","owners":{"PRC":"Jordan","NAR":"Jordan","HRC":"Jordan","PCI":"Jordan","CIP":"Jordan","FTS":""}},{"id":"r20","order":20,"freq":"Weekly","task":"1099 Contractor Payments","note":"","owners":{"PRC":"Jordan","NAR":"Jordan","HRC":"Jordan","PCI":"Jordan","CIP":"Jordan","FTS":""}},{"id":"r21","order":21,"freq":"Daily","task":"Expense Approval Review","note":"","owners":{"PRC":"Jordan","NAR":"Jordan","HRC":"Jordan","PCI":"Jordan","CIP":"Jordan","FTS":""}},{"id":"r22","order":22,"freq":"Monthly","task":"Statement Review","note":"","owners":{"PRC":"Samantha","NAR":"Jordan","HRC":"Samantha","PCI":"Jordan","CIP":"Jordan","FTS":""}},{"id":"r23","order":23,"freq":"Monthly","task":"Insurance Bill Review","note":"","owners":{"PRC":"Jordan","NAR":"Jordan","HRC":"Jordan","PCI":"Jordan","CIP":"Jordan","FTS":"Jordan"}},{"id":"r24","order":24,"freq":"Monthly","task":"Utility Bill Review","note":"","owners":{"PRC":"Jordan","NAR":"Jordan","HRC":"Jordan","PCI":"Jordan","CIP":"Jordan","FTS":"Jordan"}},{"id":"r25","order":25,"freq":"Daily","task":"AR Outreach","note":"","owners":{"PRC":"Sophya","NAR":"Sophya","HRC":"Rachel","PCI":"Doreen","CIP":"Sophya","FTS":""}},{"id":"r26","order":26,"freq":"Daily","task":"Data Audit","note":"Glen Conor Kyrssa meeting","owners":{"PRC":"Glenn","NAR":"Glenn","HRC":"Glenn","PCI":"Glenn","CIP":"Glenn","FTS":""}},{"id":"r27","order":27,"freq":"Monthly","task":"Sale and Use Tax","note":"","owners":{"PRC":"Glenn","NAR":"Glenn","HRC":"Glenn","PCI":"Glenn","CIP":"","FTS":""}},{"id":"r28","order":28,"freq":"Monthly","task":"AP Aging Review / clean up","note":"","owners":{"PRC":"Jordan","NAR":"Jordan","HRC":"Jordan","PCI":"Jordan","CIP":"Jordan","FTS":""}},{"id":"r29","order":29,"freq":"Daily","task":"Zoho Dashboard AP Monitoring / Clean-up","note":"","owners":{"PRC":"Jordan","NAR":"Jordan","HRC":"Jordan","PCI":"Jordan","CIP":"Jordan","FTS":""}},{"id":"r30","order":30,"freq":"Weekly","task":"Contractor Invoice Processing","note":"","owners":{"PRC":"Jordan","NAR":"Jordan","HRC":"Jordan","PCI":"Jordan","CIP":"Jordan","FTS":""}},{"id":"r31","order":31,"freq":"Bi-Weekly","task":"Batch Projections","note":"","owners":{"PRC":"Jordan","NAR":"Jordan","HRC":"Jordan","PCI":"Jordan","CIP":"Jordan","FTS":""}},{"id":"r32","order":32,"freq":"Daily","task":"Zoho Dashboard AR Monitoring / Clean-up","note":"","owners":{"PRC":"Sophya","NAR":"Sophya","HRC":"Sophya","PCI":"Sophya","CIP":"Sophya","FTS":""}},{"id":"r33","order":33,"freq":"As Received","task":"Project Awarded Notifications","note":"","owners":{"PRC":"Grace","NAR":"Grace","HRC":"","PCI":"","CIP":"","FTS":""}},{"id":"r34","order":34,"freq":"As Received","task":"Customer PO Set-Up","note":"","owners":{"PRC":"Grace","NAR":"Grace","HRC":"","PCI":"","CIP":"","FTS":""}},{"id":"r35","order":35,"freq":"Weekly","task":"Project Billing","note":"","owners":{"PRC":"Grace","NAR":"Grace","HRC":"Shafie","PCI":"Doreen","CIP":"","FTS":""}},{"id":"r36","order":36,"freq":"Daily","task":"Project Analysis","note":"","owners":{"PRC":"Grace","NAR":"Grace","HRC":"Grace","PCI":"Grace","CIP":"","FTS":""}},{"id":"r37","order":37,"freq":"Monthly","task":"PM Prep Forms","note":"","owners":{"PRC":"Grace","NAR":"","HRC":"","PCI":"","CIP":"","FTS":""}},{"id":"r38","order":38,"freq":"As Received","task":"Large Expense Notification Review","note":"","owners":{"PRC":"Grace","NAR":"Grace","HRC":"Grace","PCI":"Grace","CIP":"","FTS":""}},{"id":"r39","order":39,"freq":"Weekly","task":"Intercompany Transaction Clearing","note":"","owners":{"PRC":"Rosa","NAR":"Rosa","HRC":"Rosa","PCI":"Rosa","CIP":"Rosa","FTS":"Rosa"}}];
+var memory=null,listeners=[],store=null;
+function load(){try{var t=localStorage.getItem(KEY);if(t){var a=JSON.parse(t);if(Array.isArray(a))return a}}catch(e){}return memory}
+function persist(){memory=store;try{localStorage.setItem(KEY,JSON.stringify(store));return true}catch(e){return false}}
+function idx(id){for(var i=0;i<store.length;i++)if(store[i].id===id)return i;return -1}
+function snapshot(){
+  var docs=store.slice().sort(function(a,b){return a.order-b.order}).map(function(r){return {id:r.id,data:function(){return r}}});
+  return {docs:docs};
+}
+function emit(){var sn=snapshot();listeners.forEach(function(fn){fn(sn)})}
+function commit(fn){fn();var ok=persist();emit();return ok?Promise.resolve():Promise.reject({code:'storage'})}
+function makeCol(){
+  return {
+    doc:function(id){
+      id=id||('n'+Date.now().toString(36)+Math.random().toString(36).slice(2,6));
+      return {id:id,
+        set:function(d){return commit(function(){var rec=Object.assign({id:id},d),i=idx(id);if(i>-1)store[i]=rec;else store.push(rec)})},
+        update:function(p){return commit(function(){var r=store[idx(id)];if(!r)return;for(var k in p){if(k==='owners')r.owners=Object.assign({},r.owners,p.owners);else r[k]=p[k]}})},
+        delete:function(){return commit(function(){var i=idx(id);if(i>-1)store.splice(i,1)})}};
+    },
+    orderBy:function(){return {onSnapshot:function(next){listeners.push(next);next(snapshot())}}}
+  };
+}
+function boot(){
+  store=load();
+  if(!store){store=JSON.parse(JSON.stringify(SEED));persist()}
+  col=makeCol();
+  downloads={save:function(o){
+    return new Promise(function(res,rej){
+      try{
+        var url=URL.createObjectURL(new Blob([o.data],{type:'text/csv'}));
+        var a=document.createElement('a');a.href=url;a.download=o.filename;document.body.appendChild(a);a.click();
+        setTimeout(function(){URL.revokeObjectURL(url);a.remove()},500);res({status:'saved'});
+      }catch(e){rej(e)}
+    });
+  }};
+  $('add').disabled=false;
+  $('foot').textContent='Click an owner to change it, drag the dots to reorder, scroll right for FTS and Notes. Changes save in this browser. Use Export CSV for a shared copy.';
+  window.addEventListener('storage',function(e){if(e.key===KEY){var t=load();if(t){store=t;emit()}}});
   col.orderBy('order').onSnapshot(function(snap){
     rows=snap.docs.map(fromDoc).sort(function(a,b){return a.order-b.order});
-    if(canWrite)setStatus('ok','Saved');else setStatus('bad','View only');
+    setStatus('ok','Saved in this browser');
     render();
-  },function(e){
-    if(e&&e.code==='revoked')unavailable('Access to this page changed. Reload to try again.');
-    else unavailable('The list could not be loaded. Reload to try again.');
   });
 }
 boot();
 })();
 </script>
-
 </body></html>
